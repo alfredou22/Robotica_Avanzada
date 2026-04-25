@@ -1,0 +1,78 @@
+MODULE CommMod
+    ! --- VARIABLES DE RED E INTERRUPCIÓN ---
+    VAR socketdev server_socket;
+    VAR socketdev client_socket;
+    VAR intnum int_socket;
+
+    ! --- BANDERAS PERSISTENTES PARA SINCRONIZACIÓN ---
+    PERS bool flag_start := TRUE;
+    PERS bool flag_cls := FALSE;
+    PERS bool flag_opn := FALSE;
+
+    ! --- PROCEDIMIENTO DE INICIALIZACIÓN DE RED ---
+    PROC InitNetwork()
+        SocketCreate server_socket;
+        ! Ajustar IP según configuración del controlador virtual
+        SocketBind server_socket, "192.168.1.26", 8000;
+        SocketListen server_socket;
+        TPWrite "Esperando conexion del script Python OpenCV...";
+        SocketAccept server_socket, client_socket, \Time:=WAIT_MAX;
+        TPWrite "HMI conectado exitosamente.";
+
+        ! Configuración de la interrupción cíclica cada 250ms
+        IDelete int_socket;
+        CONNECT int_socket WITH tSocketReader;
+        ITimer 0.25, int_socket;
+    ENDPROC
+
+    ! --- MANEJADOR DE EVENTOS DE SOCKET ---
+    TRAP tSocketReader
+        VAR string cmd;
+        
+        ISleep int_socket; 
+        SocketReceive client_socket \Str:=cmd \Time:=0.05;
+
+        IF cmd = "STP" THEN
+            StopMove \Quick;
+            TPWrite ">>> PARO DE EMERGENCIA VIA HMI <<<";
+            WHILE TRUE DO
+                SocketReceive client_socket \Str:=cmd \Time:=WAIT_MAX;
+                IF cmd = "RES" THEN
+                    StartMove;
+                    GOTO FinTrap;
+                ELSEIF cmd = "HOM" THEN
+                    StorePath;
+                    ClearPath;
+                    StartMove;
+                    MoverAHome;
+                    ExitCycle;
+                ENDIF
+            ENDWHILE
+        ELSEIF cmd = "CLS" THEN
+            flag_cls := TRUE;
+            flag_opn := FALSE;
+        ELSEIF cmd = "OPN" THEN
+            flag_opn := TRUE;
+            flag_cls := FALSE;
+        ELSEIF cmd = "RES" THEN
+            flag_start := TRUE;
+        ELSEIF cmd = "HOM" THEN
+            StopMove \Quick;
+            StorePath;
+            ClearPath;
+            StartMove;
+            MoverAHome;
+            ExitCycle;
+        ENDIF
+
+        FinTrap:
+        IWatch int_socket;
+        RETURN;
+
+    ERROR
+        IF ERRNO = ERR_SOCK_TIMEOUT THEN
+            IWatch int_socket;
+            RETURN;
+        ENDIF
+    ENDTRAP
+ENDMODULE
