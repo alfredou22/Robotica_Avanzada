@@ -1,0 +1,146 @@
+MODULE Module1
+    PERS tooldata gripper_botellas:=[TRUE,[[-0.102,0,82.9],[1,0,0,0]],[1,[-0.173,0,30.891],[1,0,0,0],0,0,0]];
+    
+    CONST robtarget Home:=[[450.102,0,564.1],[0,0,1,0],[-1,0,-1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_1_1:=[[500,150,550],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_1_2:=[[500,150,350],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_2_1:=[[500,50,550],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_2_2:=[[500,50,350],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_3_1:=[[500,-50,550],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_3_2:=[[500,-50,350],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_4_1:=[[500,-150,550],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Botella_4_2:=[[500,-150,350],[0,0,1,0],[0,0,0,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_1_1:=[[-200,406.393,550],[0,0.707106781,0.707106781,0],[1,0,2,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_1_2:=[[-200,406.393,356.809],[0,0.707106781,0.707106781,0],[1,0,2,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_2_1:=[[-100,406.393,550],[0,0.707106781,0.707106781,0],[1,0,2,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_2_2:=[[-100,406.393,356.809],[0,0.707106781,0.707106781,0],[1,0,2,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_3_1:=[[0,406.393,550],[0,0.707106781,0.707106781,0],[1,0,2,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_3_2:=[[0,406.393,356.809],[0,0.707106781,0.707106781,0],[1,0,1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_4_1:=[[100,406.393,550],[0,0.707106781,0.707106781,0],[0,0,1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    CONST robtarget Destino_4_2:=[[100,406.393,356.809],[0,0.707106781,0.707106781,0],[0,0,1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+    VAR robtarget pHome:=[[450.102,0,564.1],[0,0,1,0],[-1,0,-1,0],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+
+    PROC main()
+        InicializarSenales;
+        InitNetwork;
+        MoverAHome;
+
+        TPWrite "ESPERANDO GESTO: REANUDAR PROCESO (START)";
+        flag_start := FALSE;
+        WaitUntil flag_start = TRUE;
+        flag_start := FALSE;
+
+        EjecutarCiclo 1, att_1, det_1, "Comienzo_1", "Destino_1", "Regreso_1";
+        EjecutarCiclo 2, att_2, det_2, "Comienzo_2", "Destino_2", "Regreso_2";
+        EjecutarCiclo 3, att_3, det_3, "Comienzo_3", "Destino_3", "Regreso_3";
+        EjecutarCiclo 4, att_4, det_4, "Comienzo_4", "Destino_4", "Regreso_4";
+
+        TPWrite "PROCESO FINALIZADO.";
+    ENDPROC
+
+    PROC EjecutarCiclo(num id, VAR signaldo att, VAR signaldo det, string p_com, string p_des, string p_reg)
+        %p_com%; 
+        
+        TPWrite "BOTELLA "+NumToStr(id,0)+": ESPERANDO GESTO CERRAR";
+        flag_cls := FALSE;
+        WaitUntil flag_cls = TRUE;
+        SetDO det, 0;
+        SetDO att, 1;
+        flag_cls := FALSE;
+
+        %p_des%;
+        
+        TPWrite "BOTELLA "+NumToStr(id,0)+": ESPERANDO GESTO ABRIR";
+        flag_opn := FALSE;
+        WaitUntil flag_opn = TRUE;
+        SetDO att, 0;
+        SetDO det, 1;
+        flag_opn := FALSE;
+
+        %p_reg%;
+    ENDPROC
+
+    PROC InicializarSenales()
+        ! 1. Anular cualquier comando de acople activo
+        SetDO att_1, 0;
+        SetDO att_2, 0;
+        SetDO att_3, 0;
+        SetDO att_4, 0;
+
+        ! 2. Disparar los Detachers para destruir enlaces lógicos residuales
+        SetDO det_1, 1;
+        SetDO det_2, 1;
+        SetDO det_3, 1;
+        SetDO det_4, 1;
+        
+        ! Permitir al procesador de la estación registrar la desconexión
+        WaitTime 0.15; 
+
+        ! 3. Restablecer los Detachers a su estado neutro
+        SetDO det_1, 0;
+        SetDO det_2, 0;
+        SetDO det_3, 0;
+        SetDO det_4, 0;
+    ENDPROC
+
+    PROC MoverAHome()
+        MoveJ pHome, v200, fine, tool0;
+    ENDPROC
+
+    PROC Comienzo_1()
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_1_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_1_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Comienzo_2()
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_2_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_2_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Comienzo_3()
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_3_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_3_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Comienzo_4()
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_4_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Botella_4_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Destino_1()
+        MoveL Botella_1_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_1_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_1_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Destino_2()
+        MoveL Botella_2_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_2_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_2_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Destino_3()
+        MoveL Botella_3_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_3_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_3_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Destino_4()
+        MoveL Botella_4_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_4_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Destino_4_2,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Regreso_1()
+        MoveL Destino_1_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Regreso_2()
+        MoveL Destino_2_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Regreso_3()
+        MoveL Destino_3_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+    PROC Regreso_4()
+        MoveL Destino_4_1,v200,fine,gripper_botellas\WObj:=wobj0;
+        MoveL Home,v200,fine,gripper_botellas\WObj:=wobj0;
+    ENDPROC
+ENDMODULE
